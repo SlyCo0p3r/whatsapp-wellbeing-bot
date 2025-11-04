@@ -1,0 +1,11 @@
+# fichiers sensibles / runtime
+.env
+state.json
+__pycache__/
+*.pyc
+
+# docker
+*.log
+
+# unraid / temp
+*.swp

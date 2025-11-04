@@ -1,0 +1,15 @@
+services: 
+  whatsapp-wellbeing-bot:
+    image: python:3.12-slim
+    container_name: whatsapp-wellbeing-bot
+    working_dir: /app
+    volumes:
+      - /mnt/user/appdata/whatsapp-wellbeing-bot:/app
+    env_file:
+      - .env
+      # ⬇️ on installe les dépendances puis on lance Flask
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt && python app.py"
+    restart: unless-stopped
+    ports:
+      - "5090:5000"   # <--- c'est ça qui rend le conteneur visible pour NPM
