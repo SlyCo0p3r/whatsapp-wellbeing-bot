@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 # ================== CONFIG ==================
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 WHATSAPP_PHONE_ID = os.getenv("WHATSAPP_PHONE_ID")
-WEBHOOK_VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN", "margdadan-verify")
+WEBHOOK_VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN")
 
 OWNER_PHONE = os.getenv("OWNER_PHONE", "").replace(" ", "")
 ALERT_PHONES = [p.strip() for p in os.getenv("ALERT_PHONES", "").split(",") if p.strip()]
@@ -153,3 +153,4 @@ def debug_ping():
 # ================== MAIN ==================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
