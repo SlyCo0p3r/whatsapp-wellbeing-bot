@@ -1,4 +1,14 @@
 import os
+from logging_config import configure_logging
+
+# configure logging as early as possible
+configure_logging(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    logfile=os.getenv("LOG_FILE", None),
+    json=(os.getenv("LOG_JSON", "false").lower() == "true"),
+)
+
+import logging
 import json
 import datetime
 import threading
@@ -6,6 +16,8 @@ import requests
 from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from zoneinfo import ZoneInfo
+
+logger = logging.getLogger("whatsapp_bot")
 
 # ================== CONFIG ==================
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
@@ -51,7 +63,7 @@ def wa_call(payload: dict):
         body = r.json()
     except Exception:
         body = r.text
-    print("[WA]", r.status_code, body)
+    logger.info("WA response", extra={"status": r.status_code, "body": body})
     return r
 
 def send_template(to: str, template_name: str, lang_code: str = "fr"):
@@ -71,7 +83,7 @@ def send_text(to: str, text: str):
 def daily_ping():
     global state
     now = datetime.datetime.now(tz=TZ)
-    print("[PING] envoi du template", TEMPLATE_DAILY, "à", OWNER_PHONE)
+    logger.info("[PING] envoi du template %s à %s", TEMPLATE_DAILY, OWNER_PHONE)
     send_template(OWNER_PHONE, TEMPLATE_DAILY)
 
     deadline = now + datetime.timedelta(minutes=RESPONSE_TIMEOUT_MIN)
@@ -94,7 +106,7 @@ def check_deadline():
     now = datetime.datetime.now(tz=TZ)
 
     if now > deadline:
-        print("[ALERTE] deadline dépassée, envoi aux contacts...")
+        logger.warning("[ALERTE] deadline dépassée, envoi aux contacts...")
         for phone in ALERT_PHONES:
             send_template(phone, TEMPLATE_ALERT)
         state["waiting"] = False
@@ -133,7 +145,7 @@ def incoming():
                     owner_e164 = OWNER_PHONE.replace("+", "")
 
                     if from_number == owner_e164:
-                        print("[WEBHOOK] réponse du owner:", text_body)
+                        logger.info("[WEBHOOK] réponse du owner: %s", text_body)
                         state = load_state()
                         state["waiting"] = False
                         state["deadline"] = None
@@ -141,7 +153,7 @@ def incoming():
                         save_state(state)
                         send_template(OWNER_PHONE, TEMPLATE_OK)
                     else:
-                        print("[WEBHOOK] message reçu d’un autre numéro:", from_number)
+                        logger.info("[WEBHOOK] message reçu d’un autre numéro: %s", from_number)
     return jsonify({"status": "ok"}), 200
 
 # ================== DEBUG ENDPOINT ==================
@@ -152,5 +164,5 @@ def debug_ping():
 
 # ================== MAIN ==================
 if __name__ == "__main__":
+    logger.info("Starting Flask app")
     app.run(host="0.0.0.0", port=5000)
-
