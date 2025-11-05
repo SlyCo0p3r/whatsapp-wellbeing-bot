@@ -21,12 +21,12 @@ Si aucune réponse n’est reçue dans un délai défini (ex: 2h), il alerte aut
 ## 🧠 Exemple de messages
 
 ### Message quotidien (`mc_daily_check`)
-> Bonjour 🐾 je suis “Mathieu le Chat”, le petit assistant automatisé de Paul.  
+> Bonjour 🐾 je suis “Mathieu le Chat”, le petit assistant automatisé de Sly.  
 > C’est l’heure de ta vérification quotidienne ! Peux-tu répondre à ce message pour me dire que tout va bien ? 💛
 
 ### Message d’alerte (`mc_alert_contacts`)
-> Bonjour 🐾 je suis “Mathieu le Chat”, le petit assistant automatisé de Paul.  
-> Je t’envoie ce message car Paul n’a pas répondu à sa vérification de sécurité habituelle 🕒  
+> Bonjour 🐾 je suis “Mathieu le Chat”, le petit assistant automatisé de Sly.  
+> Je t’envoie ce message car Sly n’a pas répondu à sa vérification de sécurité habituelle 🕒  
 > Il t’a désigné comme contact de sécurité — peux-tu vérifier que tout va bien auprès de lui ? 🙏  
 
 ---
@@ -117,4 +117,5 @@ Inspiré par une idée simple : qu’un bot puisse veiller sur ceux qu’on aime
 
 Ce projet est distribué sous licence **MIT**.
 Tu es libre de le modifier, l’améliorer ou le partager, à condition d’en citer l’auteur.
+
 
