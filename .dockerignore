@@ -1,0 +1,12 @@
+# Ne pas copier dans l'image Docker
+.env
+state.json
+data/
+*.pyc
+__pycache__/
+.git/
+.gitignore
+*.log
+*.swp
+README.md
+LICENSE

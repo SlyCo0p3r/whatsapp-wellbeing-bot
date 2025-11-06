@@ -35,10 +35,13 @@ TEMPLATE_DAILY = "mc_daily_ping"
 TEMPLATE_ALERT = "mc_safety_alert"
 TEMPLATE_OK = "mc_ok"
 
-STATE_FILE = "state.json"
+STATE_FILE = "data/state.json"
 LOCK = threading.Lock()
 
 app = Flask(__name__)
+
+# Créer le dossier data s'il n'existe pas
+os.makedirs("data", exist_ok=True)
 
 # ================== STATE HELPERS ==================
 def load_state():

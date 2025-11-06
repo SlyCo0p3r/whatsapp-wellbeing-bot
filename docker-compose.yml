@@ -5,9 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: whatsapp-wellbeing-bot
     
-    # Monte UNIQUEMENT state.json (pas tout le code)
+    # Monte un dossier data pour state.json
     volumes:
-      - /mnt/user/appdata/whatsapp-wellbeing-bot/state.json:/app/state.json
+      - /mnt/user/appdata/whatsapp-wellbeing-bot/data:/app/data
     
     env_file:
       - .env
