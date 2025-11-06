@@ -1,15 +1,26 @@
-services: 
+services:
   whatsapp-wellbeing-bot:
-    image: python:3.12-slim
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: whatsapp-wellbeing-bot
-    working_dir: /app
+    
+    # Monte UNIQUEMENT state.json (pas tout le code)
     volumes:
-      - /mnt/user/appdata/whatsapp-wellbeing-bot:/app
+      - /mnt/user/appdata/whatsapp-wellbeing-bot/state.json:/app/state.json
+    
     env_file:
       - .env
-      # ⬇️ on installe les dépendances puis on lance Flask
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt && python app.py"
+    
     restart: unless-stopped
+    
     ports:
-      - "5090:5000"   # <--- c'est ça qui rend le conteneur visible pour NPM
+      - "5090:5000"
+    
+    # Healthcheck pour surveiller que le bot est vivant
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
