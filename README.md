@@ -6,6 +6,9 @@ Si aucune réponse n’est reçue dans un délai défini (ex: 2h), il alerte aut
 
 > ⚙️ Auto-hébergé sur Unraid, fonctionnant avec la WhatsApp Cloud API et un simple conteneur Docker.
 
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.12-blue?style=for-the-badge&logo=python&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ---
 
 ## 🚀 Fonctionnalités
@@ -117,6 +120,7 @@ Inspiré par une idée simple : qu’un bot puisse veiller sur ceux qu’on aime
 
 Ce projet est distribué sous licence **MIT**.
 Tu es libre de le modifier, l’améliorer ou le partager, à condition d’en citer l’auteur.
+
 
 
 
