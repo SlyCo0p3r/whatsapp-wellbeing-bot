@@ -259,6 +259,93 @@ def validate_config():
     
     logger.info("✅ Configuration validée")
 
+# ================== WIDGET ==================
+@app.get("/widget")
+def widget():
+    """Widget HTML pour intégration WordPress"""
+    return """<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statut Mathieu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-transparent p-2">
+    <div id="widget" class="max-w-xs bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-5 text-white shadow-2xl">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🐾</div>
+            <div>
+                <div class="text-lg font-semibold">Mathieu le Chat</div>
+                <div class="text-xs opacity-90">Bot de surveillance</div>
+            </div>
+        </div>
+        <div class="text-center py-5 opacity-80">
+            <div class="inline-block w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
+            <div class="text-sm">Chargement...</div>
+        </div>
+    </div>
+    <script>
+        function fetchStatus() {
+            fetch('https://bot.paulsi.mn/health')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('API non disponible');
+                    return response.json();
+                })
+                .then(function(data) {
+                    var status = data.status !== 'ok' ? {type:'offline', label:'Hors ligne', color:'red'} :
+                                 data.waiting ? {type:'waiting', label:'En attente', color:'yellow'} :
+                                 {type:'online', label:'Actif', color:'green'};
+                    
+                    function format(iso) {
+                        if (!iso) return 'Jamais';
+                        var m = Math.floor((Date.now() - new Date(iso)) / 60000);
+                        if (m < 1) return "A l'instant";
+                        if (m < 60) return 'Il y a ' + m + 'min';
+                        if (m < 1440) return 'Il y a ' + Math.floor(m/60) + 'h';
+                        var d = new Date(iso);
+                        return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth()+1)).slice(-2);
+                    }
+                    
+                    var html = '<div class="flex items-center gap-3 mb-4">' +
+                        '<div class="text-3xl">🐾</div>' +
+                        '<div><div class="text-lg font-semibold">Mathieu le Chat</div>' +
+                        '<div class="text-xs opacity-90">Bot de surveillance</div></div></div>' +
+                        '<div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-4 mb-3 space-y-2">' +
+                        '<div class="flex justify-between items-center">' +
+                        '<span class="text-sm opacity-90">Etat</span>' +
+                        '<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-' + status.color + '-500 bg-opacity-30">' +
+                        '<span class="w-2 h-2 rounded-full bg-' + status.color + '-500 animate-pulse"></span>' +
+                        status.label + '</span></div>' +
+                        '<div class="flex justify-between items-center">' +
+                        '<span class="text-sm opacity-90">Dernier ping</span>' +
+                        '<span class="text-sm font-semibold">' + format(data.last_ping) + '</span></div>' +
+                        '<div class="flex justify-between items-center">' +
+                        '<span class="text-sm opacity-90">Derniere reponse</span>' +
+                        '<span class="text-sm font-semibold">' + format(data.last_reply) + '</span></div>' +
+                        '</div><div class="text-center text-xs opacity-70">Mise a jour toutes les 30s</div>';
+                    
+                    document.getElementById('widget').innerHTML = html;
+                })
+                .catch(function(error) {
+                    var html = '<div class="flex items-center gap-3 mb-4">' +
+                        '<div class="text-3xl">🐾</div>' +
+                        '<div><div class="text-lg font-semibold">Mathieu le Chat</div>' +
+                        '<div class="text-xs opacity-90">Bot de surveillance</div></div></div>' +
+                        '<div class="bg-red-500 bg-opacity-30 rounded-xl p-3 text-center text-sm">' +
+                        '⚠️ Erreur de connexion<br>' +
+                        '<small class="opacity-80 block mt-1">Verifiez que le bot est bien demarre</small></div>';
+                    
+                    document.getElementById('widget').innerHTML = html;
+                });
+        }
+        
+        fetchStatus();
+        setInterval(fetchStatus, 30000);
+    </script>
+</body>
+</html>""", 200, {'Content-Type': 'text/html; charset=utf-8'}
+
 # ================== MAIN ==================
 if __name__ == "__main__":
     validate_config()
