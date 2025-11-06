@@ -69,6 +69,134 @@ Assure-toi que ton webhook WhatsApp pointe vers :
 `https://<ton-domaine>/whatsapp/webhook`
 
 ---
+## 🏥 Vérifier que le bot fonctionne
+
+### Healthcheck automatique
+Le conteneur vérifie automatiquement sa santé toutes les 30 secondes.
+
+```bash
+# Voir le statut du conteneur
+docker ps
+
+# Le statut doit afficher "healthy" au lieu de "starting"
+```
+
+### Vérification manuelle
+
+**Depuis votre navigateur :**
+```
+http://IP-DE-VOTRE-NAS:5090/health
+```
+
+**Réponse attendue :**
+```json
+{
+  "status": "ok",
+  "waiting": false,
+  "last_ping": "2025-11-06T09:00:00+01:00",
+  "last_reply": "2025-11-06T09:15:00+01:00"
+}
+```
+
+### Endpoints de debug
+
+```bash
+# Forcer un ping de test (sans attendre 9h)
+curl http://IP-DE-VOTRE-NAS:5090/debug/ping
+
+# Voir l'état actuel
+curl http://IP-DE-VOTRE-NAS:5090/debug/state
+```
+
+### Logs en temps réel
+
+```bash
+# Suivre les logs du bot
+docker logs -f whatsapp-wellbeing-bot
+
+# Dernières 50 lignes
+docker logs --tail 50 whatsapp-wellbeing-bot
+```
+---
+## 🔧 Dépannage
+
+### Le conteneur ne démarre pas
+
+```bash
+# Voir les erreurs de démarrage
+docker logs whatsapp-wellbeing-bot
+
+# Vérifier la config
+docker exec whatsapp-wellbeing-bot python -c "from app import validate_config; validate_config()"
+```
+
+**Erreurs courantes :**
+- `❌ WHATSAPP_TOKEN manquant` → Vérifiez votre fichier `.env`
+- `Permission denied` → Le fichier `state.json` doit être accessible en écriture
+
+---
+
+### Les messages ne sont pas envoyés
+
+**Vérifiez l'API WhatsApp :**
+```bash
+# Tester manuellement l'envoi
+curl http://IP-DE-VOTRE-NAS:5090/debug/ping
+```
+
+**Si vous voyez `❌ WhatsApp API erreur 401` :**
+→ Votre `WHATSAPP_TOKEN` a expiré, régénérez-le sur Meta
+
+**Si vous voyez `❌ WhatsApp API erreur 131030` :**
+→ Le template n'existe pas, créez-le dans Meta Business Suite
+
+---
+
+### Le webhook ne reçoit rien
+
+**Testez que le webhook est accessible :**
+```bash
+curl https://votre-domaine.com/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=VOTRE_TOKEN&hub.challenge=test
+```
+
+**Réponse attendue :** `test`
+
+**Si ça ne marche pas :**
+1. Vérifiez Nginx Proxy Manager / reverse proxy
+2. Vérifiez que le port 5090 est bien mappé
+3. Vérifiez les logs : `docker logs nginx-proxy-manager`
+
+---
+
+### Reconstruire le conteneur après modification
+
+```bash
+cd /mnt/user/appdata/whatsapp-wellbeing-bot
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+docker logs -f whatsapp-wellbeing-bot
+```
+
+---
+
+### Réinitialiser l'état du bot
+
+Si le bot est bloqué dans un état bizarre :
+
+```bash
+# Arrêter le conteneur
+docker compose down
+
+# Supprimer le state.json
+rm /mnt/user/appdata/whatsapp-wellbeing-bot/state.json
+
+# Redémarrer
+docker compose up -d
+```
+
+
+---
 
 ## 🔧 Structure du projet
 
@@ -120,6 +248,7 @@ Inspiré par une idée simple : qu’un bot puisse veiller sur ceux qu’on aime
 
 Ce projet est distribué sous licence **MIT**.
 Tu es libre de le modifier, l’améliorer ou le partager, à condition d’en citer l’auteur.
+
 
 
 
