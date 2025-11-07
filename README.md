@@ -198,6 +198,47 @@ docker compose up -d
 
 ---
 
+---
+
+## 🌐 Widget de statut pour WordPress
+
+Le bot expose un widget HTML qui affiche l'état du bot en temps réel.
+
+### Accès au widget
+```
+https://votre-domaine.com/widget
+```
+
+### Intégration WordPress
+
+**Dans un widget HTML personnalisé** :
+```html
+<iframe 
+    src="https://votre-domaine.com/widget" 
+    width="320" 
+    height="240" 
+    frameborder="0"
+    style="border: none; border-radius: 16px; display: block; margin: 0 auto;">
+</iframe>
+```
+
+**Ou via shortcode** (dans `functions.php`) :
+```php
+function mathieu_status_widget() {
+    return '<iframe src="https://votre-domaine.com/widget" width="320" height="240" frameborder="0" style="border: none; border-radius: 16px;"></iframe>';
+}
+add_shortcode('mathieu_status', 'mathieu_status_widget');
+```
+
+Puis utilisez `[mathieu_status]` dans vos pages.
+
+Le widget affiche :
+- 🟢 **Actif** - Le bot fonctionne normalement
+- 🟡 **En attente** - Un ping a été envoyé, attend la réponse
+- 🔴 **Hors ligne** - Le bot ne répond pas
+
+Mise à jour automatique toutes les 30 secondes.
+
 ## 🔧 Structure du projet
 
 ```

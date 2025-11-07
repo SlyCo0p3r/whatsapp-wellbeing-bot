@@ -43,3 +43,5 @@ def configure_logging(level: str = "INFO", logfile: str | None = None, max_bytes
     # reduce noisy libs
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    logging.getLogger("apscheduler").setLevel(logging.WARNING)
