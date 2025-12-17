@@ -2,9 +2,7 @@ flask
 requests
 apscheduler
 tzdata
-tzlocal
 gunicorn
-waitress
 colorlog
 python-json-logger
 flask-cors
