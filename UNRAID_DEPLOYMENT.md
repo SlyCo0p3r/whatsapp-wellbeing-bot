@@ -22,39 +22,70 @@ touch /mnt/user/appdata/whatsapp-wellbeing-bot/.env
 ```yaml
 services:
   init-repo:
-    image: alpine/git:latest
+    image: alpine:latest
     container_name: whatsapp-bot-init
     volumes:
       - /mnt/user/appdata/whatsapp-wellbeing-bot:/workspace
     working_dir: /workspace
-    command: >
+    command: |
       sh -c "
-        echo '🚀 Initialisation du projet WhatsApp Wellbeing Bot';
+        apk add --no-cache git;
+        echo 'Initialisation du projet WhatsApp Wellbeing Bot';
+        mkdir -p /workspace;
+        cd /workspace;
         if [ ! -f app.py ]; then
-          echo '📥 Clonage du dépôt depuis GitHub...';
+          echo 'Clonage du depot depuis GitHub...';
           rm -rf * .* 2>/dev/null || true;
-          git clone --depth 1 https://github.com/SlyCo0p3r/whatsapp-wellbeing-bot.git temp_repo;
-          mv temp_repo/* temp_repo/.git* . 2>/dev/null || true;
+          git clone --depth 1 https://github.com/SlyCo0p3r/whatsapp-wellbeing-bot.git temp_repo || exit 1;
+          if [ ! -d temp_repo ]; then
+            echo 'ERREUR: Le clonage a echoue';
+            exit 1;
+          fi;
+          mv temp_repo/* . 2>/dev/null || true;
+          mv temp_repo/.git* . 2>/dev/null || true;
           rm -rf temp_repo;
-          echo '✅ Dépôt cloné avec succès';
+          if [ ! -f Dockerfile ]; then
+            echo 'ERREUR: Dockerfile non trouve apres le clonage';
+            ls -la;
+            exit 1;
+          fi;
+          echo 'Depot clone avec succes';
         else
-          echo '✅ Code déjà présent';
+          echo 'Code deja present';
         fi;
         if [ ! -f .env ]; then
-          echo '📝 Création du fichier .env depuis .env.example...';
-          cp .env.example .env 2>/dev/null || touch .env;
-          echo '⚠️  IMPORTANT: Éditez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
+          echo 'Creation du fichier .env depuis .env.example...';
+          if [ -f .env.example ]; then
+            cp .env.example .env;
+          else
+            echo '# Configuration WhatsApp Wellbeing Bot' > .env;
+            echo 'WHATSAPP_TOKEN=' >> .env;
+            echo 'WHATSAPP_PHONE_ID=' >> .env;
+            echo 'WEBHOOK_VERIFY_TOKEN=' >> .env;
+            echo 'OWNER_PHONE=' >> .env;
+            echo 'ALERT_PHONES=' >> .env;
+            echo 'DAILY_HOUR=9' >> .env;
+            echo 'RESPONSE_TIMEOUT_MIN=120' >> .env;
+            echo 'TZ=Europe/Paris' >> .env;
+            echo 'CORS_ORIGINS=http://localhost' >> .env;
+            echo 'USE_GUNICORN=false' >> .env;
+          fi;
+          echo 'IMPORTANT: Editez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
         else
-          echo '✅ Fichier .env existe déjà';
+          echo 'Fichier .env existe deja';
         fi;
         mkdir -p data;
         chmod -R 755 data 2>/dev/null || true;
-        echo '✅ Initialisation terminée';
+        if [ ! -f Dockerfile ]; then
+          echo 'ERREUR: Dockerfile non trouve apres le clonage';
+          exit 1;
+        fi;
+        echo 'Initialisation terminee';
       "
     restart: "no"
 
   whatsapp-wellbeing-bot:
-    build: 
+    build:
       context: /mnt/user/appdata/whatsapp-wellbeing-bot
       dockerfile: Dockerfile
     container_name: whatsapp-wellbeing-bot
@@ -97,9 +128,10 @@ OWNER_PHONE=+33612345678
 ALERT_PHONES=+33611111111,+33622222222
 ```
 
-Puis redémarrez le conteneur :
+**Important :** Après avoir modifié le `.env`, vous devez **recréer le conteneur** (pas juste le redémarrer) :
+
 ```bash
-docker-compose restart whatsapp-wellbeing-bot
+docker-compose up -d --force-recreate whatsapp-wellbeing-bot
 ```
 
 **C'est tout !** 🎉
@@ -153,7 +185,28 @@ Pour mettre à jour le code :
 ```bash
 cd /mnt/user/appdata/whatsapp-wellbeing-bot
 git pull
-docker-compose restart whatsapp-wellbeing-bot
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+---
+
+## 🔄 Recréer le conteneur
+
+Si vous devez recréer le conteneur (après modification du `.env` ou pour résoudre un problème) :
+
+```bash
+cd /mnt/user/appdata/whatsapp-wellbeing-bot
+docker-compose down
+docker-compose up -d
+```
+
+Ou pour recréer uniquement le conteneur principal :
+
+```bash
+docker-compose stop whatsapp-wellbeing-bot
+docker-compose rm -f whatsapp-wellbeing-bot
+docker-compose up -d whatsapp-wellbeing-bot
 ```
 
 ---
@@ -172,11 +225,25 @@ Vérifiez que le repo a bien été cloné :
 ls -la /mnt/user/appdata/whatsapp-wellbeing-bot/
 ```
 
+Si le Dockerfile n'existe pas, relancez init-repo :
+```bash
+docker-compose up init-repo
+```
+
 ### Le conteneur principal ne démarre pas
 Vérifiez le fichier `.env` :
 ```bash
 cat /mnt/user/appdata/whatsapp-wellbeing-bot/.env
 docker logs whatsapp-wellbeing-bot
+```
+
+**Important :** Après modification du `.env`, recréez le conteneur avec `docker-compose up -d --force-recreate whatsapp-wellbeing-bot`
+
+### Erreur de permissions sur data/state.json
+```bash
+chown -R 1000:1000 /mnt/user/appdata/whatsapp-wellbeing-bot/data/
+chmod -R 755 /mnt/user/appdata/whatsapp-wellbeing-bot/data/
+docker-compose restart whatsapp-wellbeing-bot
 ```
 
 ---
