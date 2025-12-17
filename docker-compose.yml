@@ -5,8 +5,9 @@ services:
     volumes:
       - /mnt/user/appdata/whatsapp-wellbeing-bot:/workspace
     working_dir: /workspace
+    entrypoint: ["/bin/sh", "-c"]
     command: >
-      sh -c "
+      "
         echo 'Initialisation du projet WhatsApp Wellbeing Bot';
         mkdir -p /workspace;
         cd /workspace;
