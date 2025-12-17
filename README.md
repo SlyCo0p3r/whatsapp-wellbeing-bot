@@ -50,6 +50,8 @@ Si aucune réponse n'est reçue dans un délai défini (ex: 2h), il alerte autom
 - Un compte Meta Developer avec accès à WhatsApp Cloud API
 - Un reverse proxy (Nginx, Traefik, etc.) pour exposer le webhook en HTTPS
 
+> 🐳 **Déploiement sur Unraid ?** Consultez [`UNRAID_DEPLOYMENT.md`](./UNRAID_DEPLOYMENT.md) pour une méthode ultra-simplifiée avec clonage automatique du repo !
+
 ### 1. Cloner le dépôt
 
 ```bash
