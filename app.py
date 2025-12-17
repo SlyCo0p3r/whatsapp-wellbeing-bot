@@ -532,9 +532,12 @@ if __name__ == "__main__":
     use_gunicorn = os.getenv("USE_GUNICORN", "false").lower() == "true"
     
     if use_gunicorn:
-        logger.info("🔧 Mode production: utilisez 'gunicorn app:app' directement")
-        logger.warning("⚠️ Ce script ne devrait pas être exécuté directement en production")
+        logger.warning("⚠️ USE_GUNICORN=true détecté, mais lancement avec Flask dev server")
+        logger.warning("⚠️ En production, utilisez 'gunicorn app:app' directement ou le Dockerfile")
+        logger.info("🔧 Démarrage du serveur Flask de développement...")
     else:
         logger.info("🔧 Mode développement: serveur Flask intégré")
         logger.warning("⚠️ Ne pas utiliser en production! Utilisez Gunicorn avec USE_GUNICORN=true")
-        app.run(host="0.0.0.0", port=5000, debug=False)
+    
+    # Toujours démarrer Flask, le Dockerfile gère la sélection Gunicorn/Flask
+    app.run(host="0.0.0.0", port=5000, debug=False)
