@@ -31,6 +31,11 @@ services:
             echo 'WEBHOOK_VERIFY_TOKEN=' >> .env;
             echo 'OWNER_PHONE=' >> .env;
             echo 'ALERT_PHONES=' >> .env;
+            echo 'DAILY_HOUR=9' >> .env;
+            echo 'RESPONSE_TIMEOUT_MIN=120' >> .env;
+            echo 'TZ=Europe/Paris' >> .env;
+            echo 'CORS_ORIGINS=http://localhost' >> .env;
+            echo 'USE_GUNICORN=false' >> .env;
           fi;
           echo 'IMPORTANT: Editez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
         else

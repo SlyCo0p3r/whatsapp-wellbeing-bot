@@ -72,7 +72,13 @@ services:
 
 6. Cliquez sur **"Save"** puis **"Up"**
 
-> ⚠️ **Important** : Au premier démarrage, vous verrez un avertissement `env file not found`. C'est normal ! Le conteneur `init-repo` va créer le fichier `.env` automatiquement. Attendez que `init-repo` se termine, puis configurez le `.env` et redémarrez le stack.
+> ⚠️ **Important** : Au premier démarrage, vous verrez peut-être un avertissement `env file not found`. C'est normal ! Le conteneur `init-repo` va créer le fichier `.env` automatiquement. 
+> 
+> **Solution** : Si l'erreur persiste, lancez d'abord uniquement le conteneur `init-repo` :
+> ```bash
+> docker-compose up init-repo
+> ```
+> Puis configurez le `.env` et relancez le stack complet.
 
 ### Étape 2 : Configurer le fichier .env
 
