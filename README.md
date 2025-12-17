@@ -417,7 +417,14 @@ LOG_FILE=/app/data/bot.log
 
 ## 🔄 Améliorations récentes
 
-### Version actuelle
+### Version v1.4 (actuelle)
+
+- ✅ **Déploiement Unraid simplifié** : Clonage automatique du repo GitHub au premier démarrage
+- ✅ **Docker Compose standalone** : Déploiement en 3 étapes pour Unraid (voir [`UNRAID_DEPLOYMENT.md`](./UNRAID_DEPLOYMENT.md))
+- ✅ **Conteneur init automatique** : Le conteneur `init-repo` clone automatiquement le repo et crée le `.env`
+- ✅ **Documentation Unraid complète** : Guide détaillé pour le déploiement sur Unraid
+
+### Versions précédentes
 
 - ✅ **Sécurité CORS** : Configuration des origines autorisées
 - ✅ **StateManager** : Gestion d'état thread-safe avec validation
