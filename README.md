@@ -124,9 +124,39 @@ http://IP-DE-VOTRE-NAS:5090/health
 }
 ```
 
-### Endpoints de debug
+### Documentation de l'API
+
+Le bot expose une **page web de documentation interactive** accessible à :
+
+```
+http://IP-DE-VOTRE-NAS:5090/api
+```
+
+Cette page affiche :
+- 📋 Tous les endpoints disponibles avec leurs descriptions
+- 🔧 Paramètres requis et exemples
+- 📝 Exemples de réponses JSON
+- 💻 Commandes curl prêtes à l'emploi
+- 📊 Statistiques en direct du bot
+
+### Statistiques
+
+Consultez les statistiques d'utilisation du bot :
 
 ```bash
+curl http://IP-DE-VOTRE-NAS:5090/stats
+```
+
+Retourne :
+- Nombre total de pings envoyés
+- Nombre d'alertes envoyées
+- Nombre de réponses reçues
+- Taux de réponse (pourcentage)
+- Uptime en jours
+- État actuel du bot
+
+### Endpoints de debug
+
 ⚠️ **Sécurité** : Les endpoints de debug sont **désactivés par défaut**. Pour les activer, définissez `ENABLE_DEBUG=true` dans votre `.env`. Il est également recommandé de définir un `DEBUG_TOKEN` pour protéger ces endpoints.
 
 ```bash
@@ -141,7 +171,6 @@ curl "http://IP-DE-VOTRE-NAS:5090/debug/ping?token=your-secret-token-here"
 
 # Voir l'état actuel du bot
 curl -H "X-Debug-Token: your-secret-token-here" http://IP-DE-VOTRE-NAS:5090/debug/state
-```
 ```
 
 ### Logs en temps réel
@@ -383,10 +412,16 @@ LOG_FILE=/app/data/bot.log
 - ✅ **Sécurité renforcée** : Protection des endpoints de debug, limite de taille des requêtes
 - ✅ **Robustesse améliorée** : Conversion sécurisée des variables d'environnement, vérification du scheduler, shutdown propre
 - ✅ **Parsing JSON sécurisé** : Gestion d'erreurs pour les réponses API malformées
+- ✅ **Statistiques** : Endpoint `/stats` pour suivre l'utilisation et les performances
+- ✅ **Documentation interactive** : Page web `/api` avec documentation complète des endpoints
 
 ---
 
 ## 📚 API Endpoints
+
+### Documentation interactive
+
+- `GET /api` - **Page web de documentation** de tous les endpoints avec exemples et statistiques en direct
 
 ### Webhooks
 
@@ -396,6 +431,7 @@ LOG_FILE=/app/data/bot.log
 ### Santé et monitoring
 
 - `GET /health` - État de santé du bot
+- `GET /stats` - **Statistiques d'utilisation** (pings, alertes, taux de réponse, uptime)
 - `GET /debug/state` - État actuel du bot (debug)
 - `GET /debug/ping` - Forcer un ping de test (debug)
 
