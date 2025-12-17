@@ -13,24 +13,30 @@ Si aucune réponse n’est reçue dans un délai défini (ex: 2h), il alerte aut
 
 ## 🚀 Fonctionnalités
 
-- 📅 Envoi quotidien d’un message de vérification ("ping")
+- 📅 Envoi quotidien d'un message de vérification ("ping")
 - ⏰ Délai de réponse configurable avant alerte
-- ⚠️ Envoi automatique d’un message aux contacts de sécurité
-- 🐾 Identité “Mathieu le Chat” pour rendre les messages plus humains
+- ⚠️ Envoi automatique d'un message aux contacts de sécurité
+- 🐾 Identité "Mathieu le Chat" pour rendre les messages plus humains
 - 🔒 100% auto-hébergé, aucune donnée partagée avec un service externe
+- 🛡️ **Sécurité renforcée** : CORS configurable, validation de configuration, gestion d'erreurs améliorée
+- 🔄 **Robustesse** : Gestion automatique des états corrompus, prévention des alertes multiples
+- 🚀 **Production-ready** : Support Gunicorn, validation de configuration, logging configurable
 
 ---
 
 ## 🧠 Exemple de messages
 
-### Message quotidien (`mc_daily_check`)
-> Bonjour 🐾 je suis “Mathieu le Chat”, le petit assistant automatisé de Sly.  
-> C’est l’heure de ta vérification quotidienne ! Peux-tu répondre à ce message pour me dire que tout va bien ? 💛
+### Message quotidien (`mc_daily_ping`)
+> Bonjour 🐾 je suis "Mathieu le Chat", le petit assistant automatisé de Sly.  
+> C'est l'heure de ta vérification quotidienne ! Peux-tu répondre à ce message pour me dire que tout va bien ? 💛
 
-### Message d’alerte (`mc_alert_contacts`)
-> Bonjour 🐾 je suis “Mathieu le Chat”, le petit assistant automatisé de Sly.  
-> Je t’envoie ce message car Sly n’a pas répondu à sa vérification de sécurité habituelle 🕒  
-> Il t’a désigné comme contact de sécurité — peux-tu vérifier que tout va bien auprès de lui ? 🙏  
+### Message d'alerte (`mc_safety_alert`)
+> Bonjour 🐾 je suis "Mathieu le Chat", le petit assistant automatisé de Sly.  
+> Je t'envoie ce message car Sly n'a pas répondu à sa vérification de sécurité habituelle 🕒  
+> Il t'a désigné comme contact de sécurité — peux-tu vérifier que tout va bien auprès de lui ? 🙏
+
+### Message de confirmation (`mc_ok`)
+> Merci pour ta réponse ! Tout est en ordre 🐾💛  
 
 ---
 
@@ -245,7 +251,9 @@ Mise à jour automatique toutes les 30 secondes.
 whatsapp-wellbeing-bot/
 │
 ├── app.py                 # Code principal du bot
+├── logging_config.py      # Configuration du logging
 ├── requirements.txt       # Dépendances Python
+├── Dockerfile             # Image Docker
 ├── docker-compose.yml     # Déploiement du conteneur
 ├── .env.example           # Exemple de configuration
 ├── .gitignore             # Fichiers à ne pas pousser
@@ -254,17 +262,23 @@ whatsapp-wellbeing-bot/
 
 ---
 
-## 🧩 Variables d’environnement principales
+## 🧩 Variables d'environnement principales
 
-| Variable               | Description                       | Exemple                     |
-| ---------------------- | --------------------------------- | --------------------------- |
-| `WHATSAPP_TOKEN`       | Token d’accès permanent Meta      | `EAAB...ZDZD`               |
-| `WHATSAPP_PHONE_ID`    | ID du numéro WhatsApp Cloud       | `908888888888889`           |
-| `WEBHOOK_VERIFY_TOKEN` | Token de vérification du webhook  | `margdadan-verify`          |
-| `OWNER_PHONE`          | Ton numéro WhatsApp personnel     | `+33612345678`              |
-| `ALERT_PHONES`         | Numéros d’urgence à prévenir      | `+33611111111,+33622222222` |
-| `DAILY_HOUR`           | Heure du message quotidien (0–23) | `9`                         |
-| `RESPONSE_TIMEOUT_MIN` | Délai avant alerte (min)          | `120`                       |
+| Variable               | Description                       | Exemple                     | Obligatoire |
+| ---------------------- | --------------------------------- | --------------------------- | ----------- |
+| `WHATSAPP_TOKEN`       | Token d'accès permanent Meta      | `EAAB...ZDZD`               | ✅ Oui      |
+| `WHATSAPP_PHONE_ID`    | ID du numéro WhatsApp Cloud       | `908888888888889`           | ✅ Oui      |
+| `WEBHOOK_VERIFY_TOKEN` | Token de vérification du webhook  | `margdadan-verify`          | ✅ Oui      |
+| `OWNER_PHONE`          | Ton numéro WhatsApp personnel     | `+33612345678`              | ✅ Oui      |
+| `ALERT_PHONES`         | Numéros d'urgence à prévenir      | `+33611111111,+33622222222` | ⚠️ Recommandé |
+| `DAILY_HOUR`           | Heure du message quotidien (0–23) | `9`                         | ❌ Non (défaut: 9) |
+| `RESPONSE_TIMEOUT_MIN` | Délai avant alerte (min)          | `120`                       | ❌ Non (défaut: 120) |
+| `TZ`                   | Timezone                          | `Europe/Paris`              | ❌ Non (défaut: Europe/Paris) |
+| `CORS_ORIGINS`         | Origines autorisées pour CORS     | `http://localhost,https://votre-domaine.com` | ❌ Non (défaut: localhost) |
+| `USE_GUNICORN`         | Utiliser Gunicorn en production   | `true` / `false`            | ❌ Non (défaut: false) |
+| `LOG_LEVEL`            | Niveau de log (INFO, DEBUG, etc.) | `INFO`                      | ❌ Non      |
+| `LOG_FILE`             | Fichier de log (optionnel)        | `/app/data/bot.log`         | ❌ Non      |
+| `LOG_JSON`             | Format JSON pour les logs         | `false` / `true`            | ❌ Non      |
 
 ---
 
@@ -273,6 +287,9 @@ whatsapp-wellbeing-bot/
 * Le fichier `.env` **ne doit jamais être pushé** sur GitHub.
 * Utilise des **tokens longue durée** Meta, ou régénère-les régulièrement.
 * Pour les tests, préfère le **numéro de test WhatsApp Cloud API** avant ton vrai numéro.
+* **En production**, définissez `USE_GUNICORN=true` pour utiliser Gunicorn au lieu du serveur Flask de développement.
+* Configurez `CORS_ORIGINS` avec vos domaines réels en production pour limiter l'accès au widget.
+* Le bot valide automatiquement la configuration au démarrage et affiche des warnings pour les configurations non optimales.
 
 ---
 

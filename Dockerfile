@@ -25,4 +25,6 @@ USER botuser
 EXPOSE 5000
 
 # Commande de démarrage
-CMD ["python", "app.py"]
+# Utilise Gunicorn en production, Flask dev server en développement
+# Pour forcer Gunicorn, définir USE_GUNICORN=true dans .env
+CMD ["sh", "-c", "if [ \"$USE_GUNICORN\" = \"true\" ]; then gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 --access-logfile - --error-logfile - --log-level info app:app; else python app.py; fi"]

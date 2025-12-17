@@ -1,6 +1,8 @@
 # fichiers sensibles / runtime
 .env
+data/
 state.json
+state.json.corrupt.*
 __pycache__/
 *.pyc
 
@@ -9,3 +11,5 @@ __pycache__/
 
 # unraid / temp
 *.swp
+
+!.env.example
