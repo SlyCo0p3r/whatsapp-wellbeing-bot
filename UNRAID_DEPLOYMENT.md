@@ -72,7 +72,7 @@ services:
 
 6. Cliquez sur **"Save"** puis **"Up"**
 
-> 💡 **Note** : Si le dossier `/mnt/user/appdata/whatsapp-wellbeing-bot` n'existe pas encore, Docker Compose Manager le créera automatiquement lors de la sauvegarde du fichier. Le conteneur `init-repo` clonera ensuite automatiquement le repo GitHub au premier démarrage.
+> ⚠️ **Important** : Au premier démarrage, vous verrez un avertissement `env file not found`. C'est normal ! Le conteneur `init-repo` va créer le fichier `.env` automatiquement. Attendez que `init-repo` se termine, puis configurez le `.env` et redémarrez le stack.
 
 ### Étape 2 : Configurer le fichier .env
 

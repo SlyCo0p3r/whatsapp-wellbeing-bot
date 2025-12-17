@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   init-repo:
     image: alpine/git:latest
@@ -24,7 +22,16 @@ services:
         fi;
         if [ ! -f .env ]; then
           echo 'Creation du fichier .env depuis .env.example...';
-          cp .env.example .env 2>/dev/null || touch .env;
+          if [ -f .env.example ]; then
+            cp .env.example .env;
+          else
+            echo '# Configuration WhatsApp Wellbeing Bot' > .env;
+            echo 'WHATSAPP_TOKEN=' >> .env;
+            echo 'WHATSAPP_PHONE_ID=' >> .env;
+            echo 'WEBHOOK_VERIFY_TOKEN=' >> .env;
+            echo 'OWNER_PHONE=' >> .env;
+            echo 'ALERT_PHONES=' >> .env;
+          fi;
           echo 'IMPORTANT: Editez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
         else
           echo 'Fichier .env existe deja';
