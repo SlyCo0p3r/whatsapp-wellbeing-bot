@@ -43,6 +43,10 @@ services:
         fi;
         mkdir -p data;
         chmod -R 755 data 2>/dev/null || true;
+        if [ ! -f Dockerfile ]; then
+          echo 'ERREUR: Dockerfile non trouve apres le clonage';
+          exit 1;
+        fi;
         echo 'Initialisation terminee';
       "
     restart: "no"
