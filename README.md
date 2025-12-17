@@ -319,8 +319,18 @@ Mise à jour automatique toutes les 30 secondes.
 ```
 whatsapp-wellbeing-bot/
 │
-├── app.py                 # Code principal du bot
+├── app.py                 # Point d'entrée principal, initialisation Flask
+├── config.py              # Configuration et validation
+├── state_manager.py       # Gestionnaire d'état thread-safe
+├── whatsapp_api.py        # Fonctions d'appel à l'API WhatsApp
+├── scheduler_tasks.py     # Tâches du scheduler (ping, deadline)
 ├── logging_config.py      # Configuration du logging
+├── routes/                # Routes Flask organisées par fonctionnalité
+│   ├── __init__.py
+│   ├── webhooks.py        # Webhooks WhatsApp
+│   ├── health.py          # Health check et statistiques
+│   ├── debug.py           # Endpoints de debug
+│   └── widget.py          # Widget et documentation API
 ├── requirements.txt       # Dépendances Python
 ├── Dockerfile             # Image Docker
 ├── docker-compose.yml     # Déploiement du conteneur
@@ -328,6 +338,12 @@ whatsapp-wellbeing-bot/
 ├── .gitignore             # Fichiers à ne pas pousser
 └── README.md              # Ce fichier !
 ```
+
+**Architecture modulaire :**
+- **Séparation des responsabilités** : Chaque module a un rôle clair
+- **Maintenabilité** : Code organisé et facile à modifier
+- **Testabilité** : Modules indépendants faciles à tester
+- **Réutilisabilité** : Composants réutilisables dans d'autres projets
 
 ---
 
