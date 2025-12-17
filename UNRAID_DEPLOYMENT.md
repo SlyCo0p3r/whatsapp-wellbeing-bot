@@ -1,16 +1,22 @@
 # 🐳 Déploiement Unraid - WhatsApp Wellbeing Bot
 
-## 🚀 Déploiement en 2 étapes (ultra-simple)
+## 🚀 Déploiement en 3 étapes (ultra-simple)
 
-### Étape 1 : Copier le docker-compose.yml dans Docker Compose Manager
+### Étape 1 : Créer le dossier et le fichier .env
 
-**Le dossier sera créé automatiquement par Docker !** Pas besoin de le créer manuellement.
+Créez le dossier et un fichier `.env` vide (il sera rempli automatiquement par le conteneur init) :
+
+```bash
+mkdir -p /mnt/user/appdata/whatsapp-wellbeing-bot
+touch /mnt/user/appdata/whatsapp-wellbeing-bot/.env
+```
+
+### Étape 2 : Copier le docker-compose.yml dans Docker Compose Manager
 
 1. Ouvrez **Docker Compose Manager** dans Unraid
 2. Cliquez sur **"Add Stack"**
 3. Nom : `whatsapp-wellbeing-bot`
 4. Compose File Path : `/mnt/user/appdata/whatsapp-wellbeing-bot/docker-compose.yml`
-   - ⚠️ **Note** : Le dossier sera créé automatiquement au premier démarrage
 5. **Copiez-collez le contenu ci-dessous** dans le fichier `docker-compose.yml` :
 
 ```yaml
@@ -72,15 +78,9 @@ services:
 
 6. Cliquez sur **"Save"** puis **"Up"**
 
-> ⚠️ **Important** : Au premier démarrage, vous verrez peut-être un avertissement `env file not found`. C'est normal ! Le conteneur `init-repo` va créer le fichier `.env` automatiquement. 
-> 
-> **Solution** : Si l'erreur persiste, lancez d'abord uniquement le conteneur `init-repo` :
-> ```bash
-> docker-compose up init-repo
-> ```
-> Puis configurez le `.env` et relancez le stack complet.
+> 💡 **Note** : Le conteneur `init-repo` va automatiquement remplir le fichier `.env` avec les valeurs par défaut depuis `.env.example` au premier démarrage.
 
-### Étape 2 : Configurer le fichier .env
+### Étape 3 : Configurer le fichier .env
 
 **Après le premier démarrage**, le conteneur `init-repo` aura cloné le repo et créé le fichier `.env`. Configurez vos variables :
 
