@@ -1,5 +1,6 @@
+version: '3.8'
+
 services:
-  # Conteneur init : clone le repo et prepare l'environnement
   init-repo:
     image: alpine/git:latest
     container_name: whatsapp-bot-init
@@ -34,9 +35,8 @@ services:
       "
     restart: "no"
 
-  # Conteneur principal de l'application
   whatsapp-wellbeing-bot:
-    build: 
+    build:
       context: /mnt/user/appdata/whatsapp-wellbeing-bot
       dockerfile: Dockerfile
     container_name: whatsapp-wellbeing-bot
