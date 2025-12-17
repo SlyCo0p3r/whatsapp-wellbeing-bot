@@ -243,7 +243,7 @@ docker logs whatsapp-wellbeing-bot
 ```bash
 chown -R 1000:1000 /mnt/user/appdata/whatsapp-wellbeing-bot/data/
 chmod -R 755 /mnt/user/appdata/whatsapp-wellbeing-bot/data/
-docker-compose restart whatsapp-wellbeing-bot
+docker-compose up -d --force-recreate whatsapp-wellbeing-bot
 ```
 
 ---
