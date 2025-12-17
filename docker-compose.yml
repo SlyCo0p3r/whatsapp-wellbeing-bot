@@ -1,23 +1,55 @@
 services:
+  # Conteneur init : clone le repo et prépare l'environnement
+  init-repo:
+    image: alpine/git:latest
+    container_name: whatsapp-bot-init
+    volumes:
+      - /mnt/user/appdata/whatsapp-wellbeing-bot:/workspace
+    working_dir: /workspace
+    command: >
+      sh -c "
+        echo '🚀 Initialisation du projet WhatsApp Wellbeing Bot';
+        mkdir -p /workspace;
+        cd /workspace;
+        if [ ! -f app.py ]; then
+          echo '📥 Clonage du dépôt depuis GitHub...';
+          rm -rf * .* 2>/dev/null || true;
+          git clone --depth 1 https://github.com/SlyCo0p3r/whatsapp-wellbeing-bot.git temp_repo;
+          mv temp_repo/* temp_repo/.git* . 2>/dev/null || true;
+          rm -rf temp_repo;
+          echo '✅ Dépôt cloné avec succès';
+        else
+          echo '✅ Code déjà présent';
+        fi;
+        if [ ! -f .env ]; then
+          echo '📝 Création du fichier .env depuis .env.example...';
+          cp .env.example .env 2>/dev/null || touch .env;
+          echo '⚠️  IMPORTANT: Éditez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
+        else
+          echo '✅ Fichier .env existe déjà';
+        fi;
+        mkdir -p data;
+        chmod -R 755 data 2>/dev/null || true;
+        echo '✅ Initialisation terminée';
+      "
+    restart: "no"
+
+  # Conteneur principal de l'application
   whatsapp-wellbeing-bot:
     build: 
-      context: .
+      context: /mnt/user/appdata/whatsapp-wellbeing-bot
       dockerfile: Dockerfile
     container_name: whatsapp-wellbeing-bot
-    
-    # Monte un dossier data pour state.json
+    depends_on:
+      init-repo:
+        condition: service_completed_successfully
     volumes:
       - /mnt/user/appdata/whatsapp-wellbeing-bot/data:/app/data
-    
     env_file:
-      - .env
-    
+      - /mnt/user/appdata/whatsapp-wellbeing-bot/.env
     restart: unless-stopped
-    
     ports:
       - "5090:5000"
-    
-    # Healthcheck pour surveiller que le bot est vivant
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
       interval: 30s
