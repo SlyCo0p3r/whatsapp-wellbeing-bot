@@ -13,6 +13,8 @@ import json
 import datetime
 import threading
 import time
+import signal
+import sys
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -29,13 +31,33 @@ WEBHOOK_VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN")
 OWNER_PHONE = os.getenv("OWNER_PHONE", "").replace(" ", "")
 ALERT_PHONES = [p.strip() for p in os.getenv("ALERT_PHONES", "").split(",") if p.strip()]
 
-DAILY_HOUR = int(os.getenv("DAILY_HOUR", "9"))
-RESPONSE_TIMEOUT_MIN = int(os.getenv("RESPONSE_TIMEOUT_MIN", "120"))
-TZ = ZoneInfo(os.getenv("TZ", "Europe/Paris"))
+# Conversion sécurisée des variables numériques avec valeurs par défaut
+try:
+    DAILY_HOUR = int(os.getenv("DAILY_HOUR", "9"))
+except (ValueError, TypeError):
+    logger.warning("⚠️ DAILY_HOUR invalide, utilisation de la valeur par défaut: 9")
+    DAILY_HOUR = 9
+
+try:
+    RESPONSE_TIMEOUT_MIN = int(os.getenv("RESPONSE_TIMEOUT_MIN", "120"))
+except (ValueError, TypeError):
+    logger.warning("⚠️ RESPONSE_TIMEOUT_MIN invalide, utilisation de la valeur par défaut: 120")
+    RESPONSE_TIMEOUT_MIN = 120
+
+# Conversion sécurisée du timezone avec valeur par défaut
+try:
+    TZ = ZoneInfo(os.getenv("TZ", "Europe/Paris"))
+except Exception as e:
+    logger.warning(f"⚠️ TZ invalide ({os.getenv('TZ', 'Europe/Paris')}), utilisation de la valeur par défaut: Europe/Paris")
+    TZ = ZoneInfo("Europe/Paris")
 
 # CORS: Liste des origines autorisées (séparées par des virgules)
 # Par défaut, autorise uniquement les requêtes locales pour le widget
 CORS_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost,http://127.0.0.1").split(",") if origin.strip()]
+
+# Token pour protéger les endpoints de debug (optionnel, désactive les endpoints si non défini)
+DEBUG_TOKEN = os.getenv("DEBUG_TOKEN", None)
+ENABLE_DEBUG = os.getenv("ENABLE_DEBUG", "false").lower() == "true"
 
 TEMPLATE_DAILY = "mc_daily_ping"
 TEMPLATE_ALERT = "mc_safety_alert"
@@ -44,6 +66,9 @@ TEMPLATE_OK = "mc_ok"
 STATE_FILE = "data/state.json"
 
 app = Flask(__name__)
+
+# Limiter la taille des requêtes pour éviter les attaques DoS (16 MB max)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 # CORS sécurisé : uniquement les origines autorisées
 if CORS_ORIGINS:
@@ -203,7 +228,16 @@ def wa_call(payload: dict, retry=2):
     for attempt in range(retry):
         try:
             r = requests.post(url, headers=headers, json=payload, timeout=15)
-            body = r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text
+            
+            # Parsing sécurisé du body JSON
+            try:
+                if r.headers.get("content-type", "").startswith("application/json"):
+                    body = r.json()
+                else:
+                    body = r.text
+            except (ValueError, json.JSONDecodeError) as e:
+                logger.warning(f"⚠️ Impossible de parser le JSON de la réponse: {e}")
+                body = r.text
             
             if r.status_code == 200:
                 logger.info("✅ WhatsApp API OK", extra={"body": body})
@@ -337,7 +371,29 @@ def check_deadline():
 scheduler = BackgroundScheduler(timezone=str(TZ))
 scheduler.add_job(daily_ping, "cron", hour=DAILY_HOUR, minute=0)
 scheduler.add_job(check_deadline, "interval", minutes=5)
-scheduler.start()
+
+try:
+    scheduler.start()
+    logger.info("✅ Scheduler démarré avec succès")
+except Exception as e:
+    logger.error(f"❌ Échec du démarrage du scheduler: {e}", exc_info=True)
+    raise RuntimeError("Impossible de démarrer le scheduler - le bot ne peut pas fonctionner") from e
+
+# Fonction de shutdown propre
+def shutdown_handler(signum=None, frame=None):
+    """Arrête proprement le scheduler et l'application"""
+    logger.info("🛑 Signal d'arrêt reçu, arrêt du scheduler...")
+    try:
+        if scheduler.running:
+            scheduler.shutdown(wait=True)
+            logger.info("✅ Scheduler arrêté proprement")
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'arrêt du scheduler: {e}")
+    sys.exit(0)
+
+# Enregistrer les handlers de signal pour un shutdown propre
+signal.signal(signal.SIGINT, shutdown_handler)
+signal.signal(signal.SIGTERM, shutdown_handler)
 
 # ================== WEBHOOKS ==================
 @app.get("/whatsapp/webhook")
@@ -434,14 +490,36 @@ def health():
     }), 200
 
 # ================== DEBUG ENDPOINT ==================
+def check_debug_access():
+    """Vérifie l'accès aux endpoints de debug"""
+    if not ENABLE_DEBUG:
+        return False, "Les endpoints de debug sont désactivés. Définissez ENABLE_DEBUG=true pour les activer."
+    
+    if DEBUG_TOKEN:
+        # Vérifier le token dans les headers ou query params
+        token = request.headers.get("X-Debug-Token") or request.args.get("token")
+        if token != DEBUG_TOKEN:
+            return False, "Token de debug invalide ou manquant."
+    
+    return True, None
+
 @app.get("/debug/ping")
 def debug_ping():
+    """Force un ping de test (nécessite ENABLE_DEBUG=true et optionnellement DEBUG_TOKEN)"""
+    allowed, error_msg = check_debug_access()
+    if not allowed:
+        return jsonify({"status": "error", "message": error_msg}), 403
+    
     daily_ping()
-    return "ok", 200
+    return jsonify({"status": "ok", "message": "Ping envoyé"}), 200
 
 @app.get("/debug/state")
 def debug_state():
-    """Voir l'état actuel sans le modifier"""
+    """Voir l'état actuel sans le modifier (nécessite ENABLE_DEBUG=true et optionnellement DEBUG_TOKEN)"""
+    allowed, error_msg = check_debug_access()
+    if not allowed:
+        return jsonify({"status": "error", "message": error_msg}), 403
+    
     return jsonify(state_manager.get_state()), 200
 
 # ================== VALIDATION CONFIG ==================
