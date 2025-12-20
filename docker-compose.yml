@@ -31,7 +31,8 @@ services:
         else
           echo 'Code deja present';
         fi;
-        if [ ! -f .env ]; then
+        # Créer / (ré)initialiser .env si absent OU vide
+        if [ ! -s .env ]; then
           echo 'Creation du fichier .env depuis .env.example...';
           if [ -f .env.example ]; then
             cp .env.example .env;
@@ -50,7 +51,7 @@ services:
           fi;
           echo 'IMPORTANT: Editez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
         else
-          echo 'Fichier .env existe deja';
+          echo 'Fichier .env existe deja (non vide)';
         fi;
         mkdir -p data;
         chmod -R 755 data 2>/dev/null || true;

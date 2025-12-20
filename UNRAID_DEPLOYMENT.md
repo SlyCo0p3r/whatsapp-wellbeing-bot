@@ -4,11 +4,10 @@
 
 ### Étape 1 : Créer le dossier et le fichier .env
 
-Créez le dossier et un fichier `.env` vide (il sera rempli automatiquement par le conteneur init) :
+Créez le dossier. Le fichier `.env` sera créé automatiquement par le conteneur init (si absent **ou vide**) :
 
 ```bash
 mkdir -p /mnt/user/appdata/whatsapp-wellbeing-bot
-touch /mnt/user/appdata/whatsapp-wellbeing-bot/.env
 ```
 
 ### Étape 2 : Copier le docker-compose.yml dans Docker Compose Manager
@@ -53,7 +52,8 @@ services:
         else
           echo 'Code deja present';
         fi;
-        if [ ! -f .env ]; then
+        # Créer / (ré)initialiser .env si absent OU vide
+        if [ ! -s .env ]; then
           echo 'Creation du fichier .env depuis .env.example...';
           if [ -f .env.example ]; then
             cp .env.example .env;
@@ -72,7 +72,7 @@ services:
           fi;
           echo 'IMPORTANT: Editez /mnt/user/appdata/whatsapp-wellbeing-bot/.env avec vos valeurs';
         else
-          echo 'Fichier .env existe deja';
+          echo 'Fichier .env existe deja (non vide)';
         fi;
         mkdir -p data;
         chmod -R 755 data 2>/dev/null || true;
@@ -134,7 +134,7 @@ ALERT_PHONES=+33611111111,+33622222222
 **Important :** Après avoir modifié le `.env`, vous devez **recréer le conteneur** (pas juste le redémarrer) :
 
 ```bash
-docker-compose up -d --force-recreate whatsapp-wellbeing-bot
+docker compose up -d --force-recreate whatsapp-wellbeing-bot
 ```
 
 ### Optionnel : supprimer `init-repo` après le premier déploiement
@@ -149,7 +149,7 @@ cd /mnt/user/appdata/whatsapp-wellbeing-bot
 # 1) Éditer docker-compose.yml et supprimer le bloc init-repo + depends_on associé
 nano docker-compose.yml
 # 2) Recréer
-docker-compose up -d --force-recreate
+docker compose up -d --force-recreate
 ```
 
 **C'est tout !** 🎉
@@ -203,8 +203,8 @@ Pour mettre à jour le code :
 ```bash
 cd /mnt/user/appdata/whatsapp-wellbeing-bot
 git pull
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ---
@@ -215,16 +215,16 @@ Si vous devez recréer le conteneur (après modification du `.env` ou pour réso
 
 ```bash
 cd /mnt/user/appdata/whatsapp-wellbeing-bot
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 Ou pour recréer uniquement le conteneur principal :
 
 ```bash
-docker-compose stop whatsapp-wellbeing-bot
-docker-compose rm -f whatsapp-wellbeing-bot
-docker-compose up -d whatsapp-wellbeing-bot
+docker compose stop whatsapp-wellbeing-bot
+docker compose rm -f whatsapp-wellbeing-bot
+docker compose up -d whatsapp-wellbeing-bot
 ```
 
 ---
@@ -234,7 +234,7 @@ docker-compose up -d whatsapp-wellbeing-bot
 ### Le conteneur init-repo échoue
 ```bash
 docker logs whatsapp-bot-init
-docker-compose up init-repo
+docker compose up init-repo
 ```
 
 ### Le build échoue
@@ -245,7 +245,7 @@ ls -la /mnt/user/appdata/whatsapp-wellbeing-bot/
 
 Si le Dockerfile n'existe pas, relancez init-repo :
 ```bash
-docker-compose up init-repo
+docker compose up init-repo
 ```
 
 ### Le conteneur principal ne démarre pas
@@ -255,13 +255,13 @@ cat /mnt/user/appdata/whatsapp-wellbeing-bot/.env
 docker logs whatsapp-wellbeing-bot
 ```
 
-**Important :** Après modification du `.env`, recréez le conteneur avec `docker-compose up -d --force-recreate whatsapp-wellbeing-bot`
+**Important :** Après modification du `.env`, recréez le conteneur avec `docker compose up -d --force-recreate whatsapp-wellbeing-bot`
 
 ### Erreur de permissions sur data/state.json
 ```bash
 chown -R 1000:1000 /mnt/user/appdata/whatsapp-wellbeing-bot/data/
 chmod -R 755 /mnt/user/appdata/whatsapp-wellbeing-bot/data/
-docker-compose up -d --force-recreate whatsapp-wellbeing-bot
+docker compose up -d --force-recreate whatsapp-wellbeing-bot
 ```
 
 ---
