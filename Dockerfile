@@ -27,4 +27,8 @@ EXPOSE 5000
 # Commande de démarrage
 # Utilise Gunicorn en production, Flask dev server en développement
 # Pour forcer Gunicorn, définir USE_GUNICORN=true dans .env
-CMD ["sh", "-c", "if [ \"$USE_GUNICORN\" = \"true\" ]; then gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 --access-logfile - --error-logfile - --log-level info app:app; else python app.py; fi"]
+ENV GUNICORN_WORKERS=1 \
+    GUNICORN_THREADS=2 \
+    GUNICORN_TIMEOUT=120
+
+CMD ["sh", "-c", "if [ \"$USE_GUNICORN\" = \"true\" ]; then gunicorn --bind 0.0.0.0:5000 --workers ${GUNICORN_WORKERS:-1} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-120} --access-logfile - --error-logfile - --log-level info app:app; else python app.py; fi"]

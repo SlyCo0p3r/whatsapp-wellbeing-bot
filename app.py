@@ -21,6 +21,7 @@ from config import (
 )
 from state_manager import StateManager
 from scheduler_tasks import daily_ping, check_deadline
+from scheduler_lock import try_acquire_scheduler_lock
 from routes import webhooks, health, debug, widget
 
 logger = logging.getLogger("whatsapp_bot")
@@ -46,16 +47,37 @@ else:
 state_manager = StateManager(STATE_FILE)
 
 # ================== SCHEDULER ==================
+SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "true").lower() == "true"
+SCHEDULER_LOCK_FILE = os.getenv("SCHEDULER_LOCK_FILE", "data/scheduler.lock")
+
+# On garde le lock en variable globale pour conserver le verrou tant que le process vit.
+_scheduler_lock = None
+
 scheduler = BackgroundScheduler(timezone=str(TZ))
 scheduler.add_job(daily_ping, "cron", hour=DAILY_HOUR, minute=0)
 scheduler.add_job(check_deadline, "interval", minutes=5)
 
-try:
-    scheduler.start()
-    logger.info("✅ Scheduler démarré avec succès")
-except Exception as e:
-    logger.error(f"❌ Échec du démarrage du scheduler: {e}", exc_info=True)
-    raise RuntimeError("Impossible de démarrer le scheduler - le bot ne peut pas fonctionner") from e
+if SCHEDULER_ENABLED:
+    _scheduler_lock = try_acquire_scheduler_lock(SCHEDULER_LOCK_FILE)
+    if _scheduler_lock.acquired:
+        try:
+            scheduler.start()
+            logger.info("✅ Scheduler démarré (lock acquis)")
+        except Exception as e:
+            logger.error(f"❌ Échec du démarrage du scheduler: {e}", exc_info=True)
+            # Libérer le lock si on échoue à démarrer
+            try:
+                _scheduler_lock.release()
+            except Exception:
+                pass
+            raise RuntimeError("Impossible de démarrer le scheduler - le bot ne peut pas fonctionner") from e
+    else:
+        logger.warning(
+            "⚠️ Scheduler non démarré: un autre processus détient déjà le lock "
+            f"({SCHEDULER_LOCK_FILE})."
+        )
+else:
+    logger.warning("⚠️ SCHEDULER_ENABLED=false: scheduler désactivé")
 
 # Fonction de shutdown propre
 def shutdown_handler(signum=None, frame=None):
@@ -67,6 +89,11 @@ def shutdown_handler(signum=None, frame=None):
             logger.info("✅ Scheduler arrêté proprement")
     except Exception as e:
         logger.error(f"❌ Erreur lors de l'arrêt du scheduler: {e}")
+    try:
+        if _scheduler_lock and getattr(_scheduler_lock, "acquired", False):
+            _scheduler_lock.release()
+    except Exception:
+        pass
     sys.exit(0)
 
 # Enregistrer les handlers de signal pour un shutdown propre

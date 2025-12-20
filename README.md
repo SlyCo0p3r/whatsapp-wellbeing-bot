@@ -363,6 +363,11 @@ whatsapp-wellbeing-bot/
 | `TZ`                   | Timezone                          | `Europe/Paris`              | ❌ Non (défaut: Europe/Paris) |
 | `CORS_ORIGINS`         | Origines autorisées pour CORS     | `http://localhost,https://votre-domaine.com` | ❌ Non (défaut: localhost) |
 | `USE_GUNICORN`         | Utiliser Gunicorn en production   | `true` / `false`            | ❌ Non (défaut: false) |
+| `GUNICORN_WORKERS`     | Nombre de workers Gunicorn        | `1`                         | ❌ Non (défaut: 1) |
+| `GUNICORN_THREADS`     | Nombre de threads par worker      | `2`                         | ❌ Non (défaut: 2) |
+| `GUNICORN_TIMEOUT`     | Timeout Gunicorn (secondes)       | `120`                       | ❌ Non (défaut: 120) |
+| `SCHEDULER_ENABLED`    | Activer le scheduler APScheduler  | `true` / `false`            | ❌ Non (défaut: true) |
+| `SCHEDULER_LOCK_FILE`  | Fichier de lock du scheduler      | `data/scheduler.lock`       | ❌ Non (défaut: data/scheduler.lock) |
 | `LOG_LEVEL`            | Niveau de log (INFO, DEBUG, etc.) | `INFO`                      | ❌ Non      |
 | `LOG_FILE`             | Fichier de log (optionnel)        | `/app/data/bot.log`         | ❌ Non      |
 | `LOG_JSON`             | Format JSON pour les logs         | `false` / `true`            | ❌ Non      |
@@ -374,10 +379,15 @@ whatsapp-wellbeing-bot/
 ```bash
 # Production
 USE_GUNICORN=true
+GUNICORN_WORKERS=1
 CORS_ORIGINS=https://votre-domaine.com
 LOG_LEVEL=INFO
 LOG_FILE=/app/data/bot.log
 ```
+
+> ⚠️ Note : avec Gunicorn, **chaque worker est un processus**. Si un scheduler est démarré dans le code à l'import,
+> plusieurs workers peuvent provoquer des exécutions du job en double. Le bot utilise un **lock fichier** pour
+> empêcher ces doublons, mais la configuration la plus simple et recommandée est `GUNICORN_WORKERS=1`.
 
 ---
 
