@@ -1,16 +1,11 @@
 """Tâches du scheduler pour le bot WhatsApp Wellbeing"""
 import logging
 import datetime
-from config import TZ, OWNER_PHONE, ALERT_PHONES, RESPONSE_TIMEOUT_MIN, TEMPLATE_DAILY, TEMPLATE_ALERT, TEMPLATE_OK
+from config import TZ, OWNER_PHONE, ALERT_PHONES, RESPONSE_TIMEOUT_MIN, TEMPLATE_DAILY, TEMPLATE_ALERT
+from services import get_state_manager
 from whatsapp_api import send_template
 
 logger = logging.getLogger("whatsapp_bot")
-
-# Import de state_manager depuis app.py pour éviter dépendance circulaire
-def get_state_manager():
-    """Récupère l'instance de state_manager depuis app.py"""
-    from app import state_manager
-    return state_manager
 
 
 def daily_ping():

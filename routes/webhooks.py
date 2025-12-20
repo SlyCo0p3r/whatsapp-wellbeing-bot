@@ -3,15 +3,10 @@ import json
 import logging
 from flask import Blueprint, request, jsonify
 from config import WEBHOOK_VERIFY_TOKEN, OWNER_PHONE, TEMPLATE_OK
+from services import get_state_manager
 from whatsapp_api import send_template
 
 logger = logging.getLogger("whatsapp_bot")
-
-# Import de state_manager depuis app.py pour éviter dépendance circulaire
-def get_state_manager():
-    """Récupère l'instance de state_manager depuis app.py"""
-    from app import state_manager
-    return state_manager
 
 bp = Blueprint('webhooks', __name__)
 

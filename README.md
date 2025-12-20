@@ -196,7 +196,7 @@ docker logs --tail 50 whatsapp-wellbeing-bot
 docker logs whatsapp-wellbeing-bot
 
 # Vérifier la configuration
-docker exec whatsapp-wellbeing-bot python -c "from app import validate_config; validate_config()"
+docker exec whatsapp-wellbeing-bot python -c "from config import validate_config; validate_config()"
 ```
 
 **Erreurs courantes :**
@@ -388,6 +388,12 @@ LOG_FILE=/app/data/bot.log
 > ⚠️ Note : avec Gunicorn, **chaque worker est un processus**. Si un scheduler est démarré dans le code à l'import,
 > plusieurs workers peuvent provoquer des exécutions du job en double. Le bot utilise un **lock fichier** pour
 > empêcher ces doublons, mais la configuration la plus simple et recommandée est `GUNICORN_WORKERS=1`.
+
+### Recommandations NAS (Unraid)
+
+- **Garder l'IO minimal**: le bot écrit dans `data/state.json` (petit fichier). L'écriture est atomique pour éviter la corruption en cas de coupure.
+- **Logs**: préférez stdout (`docker logs`) et/ou `LOG_FILE=/app/data/bot.log` si vous voulez historiser sur disque.
+- **Performances**: `GUNICORN_WORKERS=1` est suffisant (faible charge). Les requêtes HTTP sortantes réutilisent une session `requests` pour limiter l'overhead.
 
 ---
 

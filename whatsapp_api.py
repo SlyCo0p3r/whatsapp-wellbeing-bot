@@ -6,6 +6,7 @@ import requests
 from config import WHATSAPP_TOKEN, WHATSAPP_PHONE_ID
 
 logger = logging.getLogger("whatsapp_bot")
+_session = requests.Session()
 
 
 def wa_call(payload: dict, retry=2):
@@ -20,7 +21,7 @@ def wa_call(payload: dict, retry=2):
     
     for attempt in range(retry):
         try:
-            r = requests.post(url, headers=headers, json=payload, timeout=15)
+            r = _session.post(url, headers=headers, json=payload, timeout=15)
             
             # Parsing sécurisé du body JSON
             try:

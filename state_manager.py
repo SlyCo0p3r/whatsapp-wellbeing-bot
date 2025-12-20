@@ -5,6 +5,8 @@ import logging
 import threading
 import time
 import datetime
+import tempfile
+import copy
 from zoneinfo import ZoneInfo
 from config import TZ, STATE_FILE
 
@@ -36,7 +38,8 @@ class StateManager:
     
     def _validate_state(self, state: dict) -> dict:
         """Valide et normalise l'état avec valeurs par défaut"""
-        validated = self.DEFAULT_STATE.copy()
+        # deepcopy pour éviter des références partagées (dict stats)
+        validated = copy.deepcopy(self.DEFAULT_STATE)
         
         # Migration et validation des champs
         if isinstance(state, dict):
@@ -80,7 +83,7 @@ class StateManager:
         try:
             if not os.path.exists(self.state_file):
                 logger.info("📝 Création d'un nouvel état par défaut")
-                return self.DEFAULT_STATE.copy()
+                return copy.deepcopy(self.DEFAULT_STATE)
             
             with open(self.state_file, "r", encoding="utf-8") as f:
                 state = json.load(f)
@@ -105,11 +108,11 @@ class StateManager:
                 logger.info(f"💾 Backup du fichier corrompu: {backup_file}")
             except Exception:
                 pass
-            return self.DEFAULT_STATE.copy()
+            return copy.deepcopy(self.DEFAULT_STATE)
             
         except Exception as e:
             logger.error(f"❌ Erreur lecture state.json: {e}", exc_info=True)
-            return self.DEFAULT_STATE.copy()
+            return copy.deepcopy(self.DEFAULT_STATE)
     
     def _save_state_internal(self, state: dict):
         """Sauvegarde interne (sans lock, appelée depuis méthodes avec lock)"""
@@ -118,9 +121,28 @@ class StateManager:
             state_dir = os.path.dirname(self.state_file)
             if state_dir:  # Si le fichier est dans un sous-dossier
                 os.makedirs(state_dir, exist_ok=True)
-            
-            with open(self.state_file, "w", encoding="utf-8") as f:
-                json.dump(state, f, indent=2, ensure_ascii=False)
+
+            # Écriture atomique (NAS-friendly): tmp -> fsync -> os.replace
+            tmp_dir = state_dir or "."
+            fd, tmp_path = tempfile.mkstemp(prefix=".state.", suffix=".tmp", dir=tmp_dir)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(state, f, indent=2, ensure_ascii=False)
+                    f.flush()
+                    try:
+                        os.fsync(f.fileno())
+                    except Exception:
+                        # best-effort (certains FS / environnements)
+                        pass
+
+                os.replace(tmp_path, self.state_file)
+            finally:
+                # Si os.replace a échoué, nettoyer le tmp
+                try:
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+                except Exception:
+                    pass
         except Exception as e:
             logger.error(f"❌ Erreur écriture state.json: {e}", exc_info=True)
             raise

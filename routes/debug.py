@@ -3,14 +3,9 @@ import logging
 from flask import Blueprint, request, jsonify
 from config import ENABLE_DEBUG, DEBUG_TOKEN
 from scheduler_tasks import daily_ping
+from services import get_state_manager
 
 logger = logging.getLogger("whatsapp_bot")
-
-# Import de state_manager depuis app.py pour éviter dépendance circulaire
-def get_state_manager():
-    """Récupère l'instance de state_manager depuis app.py"""
-    from app import state_manager
-    return state_manager
 
 bp = Blueprint('debug', __name__)
 

@@ -14,22 +14,22 @@ configure_logging(
 
 from flask import Flask
 from flask_cors import CORS
-from apscheduler.schedulers.background import BackgroundScheduler
 from config import (
-    CORS_ORIGINS, STATE_FILE, TZ, DAILY_HOUR, RESPONSE_TIMEOUT_MIN, ALERT_PHONES,
+    CORS_ORIGINS, TZ, DAILY_HOUR, RESPONSE_TIMEOUT_MIN, ALERT_PHONES,
     validate_config
 )
-from state_manager import StateManager
-from scheduler_tasks import daily_ping, check_deadline
-from scheduler_lock import try_acquire_scheduler_lock
+from scheduler_service import start_scheduler, stop_scheduler
 from routes import webhooks, health, debug, widget
 
 logger = logging.getLogger("whatsapp_bot")
 
 # ================== INITIALISATION ==================
 
-# Créer le dossier data s'il n'existe pas
+# Créer le dossier data s'il n'existe pas (state.json + lock scheduler)
 os.makedirs("data", exist_ok=True)
+
+# Validation de config au démarrage (Gunicorn inclus): fail-fast en prod.
+validate_config()
 
 # Instance Flask
 app = Flask(__name__)
@@ -44,56 +44,16 @@ else:
     logger.warning("⚠️ CORS_ORIGINS non configuré, CORS désactivé")
 
 # Instance globale du gestionnaire d'état
-state_manager = StateManager(STATE_FILE)
+# (StateManager est instancié dans services.py)
 
 # ================== SCHEDULER ==================
-SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "true").lower() == "true"
-SCHEDULER_LOCK_FILE = os.getenv("SCHEDULER_LOCK_FILE", "data/scheduler.lock")
-
-# On garde le lock en variable globale pour conserver le verrou tant que le process vit.
-_scheduler_lock = None
-
-scheduler = BackgroundScheduler(timezone=str(TZ))
-scheduler.add_job(daily_ping, "cron", hour=DAILY_HOUR, minute=0)
-scheduler.add_job(check_deadline, "interval", minutes=5)
-
-if SCHEDULER_ENABLED:
-    _scheduler_lock = try_acquire_scheduler_lock(SCHEDULER_LOCK_FILE)
-    if _scheduler_lock.acquired:
-        try:
-            scheduler.start()
-            logger.info("✅ Scheduler démarré (lock acquis)")
-        except Exception as e:
-            logger.error(f"❌ Échec du démarrage du scheduler: {e}", exc_info=True)
-            # Libérer le lock si on échoue à démarrer
-            try:
-                _scheduler_lock.release()
-            except Exception:
-                pass
-            raise RuntimeError("Impossible de démarrer le scheduler - le bot ne peut pas fonctionner") from e
-    else:
-        logger.warning(
-            "⚠️ Scheduler non démarré: un autre processus détient déjà le lock "
-            f"({SCHEDULER_LOCK_FILE})."
-        )
-else:
-    logger.warning("⚠️ SCHEDULER_ENABLED=false: scheduler désactivé")
+start_scheduler()
 
 # Fonction de shutdown propre
 def shutdown_handler(signum=None, frame=None):
     """Arrête proprement le scheduler et l'application"""
     logger.info("🛑 Signal d'arrêt reçu, arrêt du scheduler...")
-    try:
-        if scheduler.running:
-            scheduler.shutdown(wait=True)
-            logger.info("✅ Scheduler arrêté proprement")
-    except Exception as e:
-        logger.error(f"❌ Erreur lors de l'arrêt du scheduler: {e}")
-    try:
-        if _scheduler_lock and getattr(_scheduler_lock, "acquired", False):
-            _scheduler_lock.release()
-    except Exception:
-        pass
+    stop_scheduler()
     sys.exit(0)
 
 # Enregistrer les handlers de signal pour un shutdown propre
@@ -109,22 +69,12 @@ app.register_blueprint(widget.bp)
 
 # ================== MAIN ==================
 if __name__ == "__main__":
-    validate_config()
     logger.info("🚀 Démarrage du bot WhatsApp Wellbeing")
     logger.info(f"📅 Ping quotidien à {DAILY_HOUR}h")
     logger.info(f"⏱️ Timeout: {RESPONSE_TIMEOUT_MIN} minutes")
     logger.info(f"📞 Contacts d'alerte: {len(ALERT_PHONES)}")
     
-    # Détecter si on est en production (Gunicorn) ou développement
-    use_gunicorn = os.getenv("USE_GUNICORN", "false").lower() == "true"
+    logger.info("🔧 Démarrage du serveur Flask intégré (développement)")
+    logger.warning("⚠️ En production, utilisez Gunicorn (USE_GUNICORN=true via Dockerfile)")
     
-    if use_gunicorn:
-        logger.warning("⚠️ USE_GUNICORN=true détecté, mais lancement avec Flask dev server")
-        logger.warning("⚠️ En production, utilisez 'gunicorn app:app' directement ou le Dockerfile")
-        logger.info("🔧 Démarrage du serveur Flask de développement...")
-    else:
-        logger.info("🔧 Mode développement: serveur Flask intégré")
-        logger.warning("⚠️ Ne pas utiliser en production! Utilisez Gunicorn avec USE_GUNICORN=true")
-    
-    # Toujours démarrer Flask, le Dockerfile gère la sélection Gunicorn/Flask
     app.run(host="0.0.0.0", port=5000, debug=False)

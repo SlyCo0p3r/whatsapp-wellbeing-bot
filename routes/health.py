@@ -3,15 +3,10 @@ import datetime
 import logging
 from flask import Blueprint, jsonify
 from config import TZ, DAILY_HOUR, RESPONSE_TIMEOUT_MIN, ALERT_PHONES
-from scheduler_lock import is_scheduler_lock_held
+from services import get_state_manager
+from scheduler_service import is_scheduler_active
 
 logger = logging.getLogger("whatsapp_bot")
-
-# Import de state_manager depuis app.py pour éviter dépendance circulaire
-def get_state_manager():
-    """Récupère l'instance de state_manager depuis app.py"""
-    from app import state_manager
-    return state_manager
 
 bp = Blueprint('health', __name__)
 
@@ -52,13 +47,8 @@ def stats():
     
     # État du scheduler (importé depuis app.py pour éviter dépendance circulaire)
     try:
-        from app import scheduler, SCHEDULER_ENABLED, SCHEDULER_LOCK_FILE
-        # Avec Gunicorn multi-workers, le scheduler ne tourne que dans 1 process.
-        # Cette vérification via lock reflète mieux "est-ce qu'il y a un scheduler actif quelque part ?"
-        scheduler_running = bool(SCHEDULER_ENABLED) and (
-            is_scheduler_lock_held(SCHEDULER_LOCK_FILE) or (scheduler.running if scheduler else False)
-        )
-    except (ImportError, AttributeError):
+        scheduler_running = is_scheduler_active()
+    except Exception:
         scheduler_running = False
     
     return jsonify({
