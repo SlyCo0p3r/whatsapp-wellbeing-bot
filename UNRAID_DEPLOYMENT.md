@@ -110,6 +110,9 @@ services:
 6. Cliquez sur **"Save"** puis **"Up"**
 
 > 💡 **Note** : Le conteneur `init-repo` va automatiquement remplir le fichier `.env` avec les valeurs par défaut depuis `.env.example` au premier démarrage.
+>
+> ✅ **Bon à savoir (maintenance)** : `init-repo` est un conteneur **one-shot** (il s'exécute puis s'arrête).  
+> Une fois le dépôt cloné et le `.env` créé, vous pouvez **le laisser** (il ne consomme rien au quotidien) **ou le supprimer** du stack pour simplifier.
 
 ### Étape 3 : Configurer le fichier .env
 
@@ -132,6 +135,21 @@ ALERT_PHONES=+33611111111,+33622222222
 
 ```bash
 docker-compose up -d --force-recreate whatsapp-wellbeing-bot
+```
+
+### Optionnel : supprimer `init-repo` après le premier déploiement
+
+Si vous voulez un stack “runtime-only” :
+
+- **Docker Compose Manager** : éditez le stack et supprimez le service `init-repo`, puis **Save** / **Up**
+- **En CLI** (exemple):
+
+```bash
+cd /mnt/user/appdata/whatsapp-wellbeing-bot
+# 1) Éditer docker-compose.yml et supprimer le bloc init-repo + depends_on associé
+nano docker-compose.yml
+# 2) Recréer
+docker-compose up -d --force-recreate
 ```
 
 **C'est tout !** 🎉

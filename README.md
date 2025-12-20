@@ -437,7 +437,7 @@ LOG_FILE=/app/data/bot.log
 
 - ✅ **Déploiement Unraid simplifié** : Clonage automatique du repo GitHub au premier démarrage
 - ✅ **Docker Compose standalone** : Déploiement en 3 étapes pour Unraid (voir [`UNRAID_DEPLOYMENT.md`](./UNRAID_DEPLOYMENT.md))
-- ✅ **Conteneur init automatique** : Le conteneur `init-repo` clone automatiquement le repo et crée le `.env`
+- ✅ **Conteneur init automatique (one-shot)** : le conteneur `init-repo` clone automatiquement le repo et crée le `.env` au premier démarrage (vous pouvez ensuite le laisser ou le supprimer pour simplifier le stack)
 - ✅ **Documentation Unraid complète** : Guide détaillé pour le déploiement sur Unraid
 
 ### Versions précédentes
