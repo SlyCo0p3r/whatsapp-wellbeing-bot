@@ -45,7 +45,7 @@ def stats():
         except (ValueError, TypeError):
             pass
     
-    # État du scheduler (importé depuis app.py pour éviter dépendance circulaire)
+    # État du scheduler (importé depuis scheduler_service)
     try:
         scheduler_running = is_scheduler_active()
     except Exception:
@@ -74,4 +74,3 @@ def stats():
             "alert_phones_count": len(ALERT_PHONES)
         }
     }), 200
-
