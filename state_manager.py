@@ -150,7 +150,7 @@ class StateManager:
     def get_state(self) -> dict:
         """Récupère une copie de l'état actuel"""
         with self.lock:
-            return self._state.copy()
+            return copy.deepcopy(self._state)
     
     def update_state(self, updates: dict):
         """Met à jour l'état de manière thread-safe"""
@@ -210,4 +210,3 @@ class StateManager:
             self._state["stats"]["total_alerts"] = self._state["stats"].get("total_alerts", 0) + 1
             
             self._save_state_internal(self._state)
-
